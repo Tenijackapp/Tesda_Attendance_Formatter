@@ -427,7 +427,13 @@ async function download(){
   sheet=sheet.replace(/<sheetData>[\s\S]*?<\/sheetData>/,"<sheetData>"+allRows+"</sheetData>");
   if(mergeMatch)sheet=sheet.replace(/<mergeCells[^>]*>[\s\S]*?<\/mergeCells>/,`<mergeCells count="${(allMerges.match(/<mergeCell /g)||[]).length}">`+allMerges+"</mergeCells>");
   sheet=sheet.replace(/<dimension ref="[^"]*"\/>/,`<dimension ref="A1:Q${pages.length*BLOCK_H}"/>`);
-  if(rowBreaks){ if(/<pageMargins/.test(sheet))sheet=sheet.replace(/<pageMargins/,rowBreaks+"<pageMargins");else sheet=sheet.replace(/<\/worksheet>/,rowBreaks+"</worksheet>"); }
+  if(rowBreaks){
+    if(/<pageSetup\b[^>]*\/>/.test(sheet)) sheet=sheet.replace(/(<pageSetup\b[^>]*\/>)/,"$1"+rowBreaks);
+    else if(/<pageSetup\b[^>]*><\/pageSetup>/.test(sheet)) sheet=sheet.replace(/(<pageSetup\b[^>]*><\/pageSetup>)/,"$1"+rowBreaks);
+    else if(/<pageMargins\b[^>]*\/>/.test(sheet)) sheet=sheet.replace(/(<pageMargins\b[^>]*\/>)/,"$1"+rowBreaks);
+    else if(/<drawing\b/.test(sheet)) sheet=sheet.replace(/(<drawing\b)/,rowBreaks+"$1");
+    else sheet=sheet.replace(/<\/worksheet>/,rowBreaks+"</worksheet>");
+  }
   draw=draw.replace(/<wsDr[^>]*>[\s\S]*?<\/wsDr>/,m=>m.replace(/(<wsDr[^>]*>)[\s\S]*(<\/wsDr>)/,"$1"+allAnchors+"$2"));
 
   zip["xl/worksheets/sheet1.xml"]=encd.encode(sheet);
